@@ -8,8 +8,6 @@ class Config:
     BOT_TOKEN: str = os.getenv('BOT_TOKEN')
     LOG_LEVEL: str = os.getenv('LOG_LEVEL', "INFO")
     LOG_FILE: str = os.getenv('LOG_FILE', 'bot.log')
-
-
-
+    LOG_TO_FILE: bool = os.getenv('LOG_TO_FILE', 'True') == "True"
 
 

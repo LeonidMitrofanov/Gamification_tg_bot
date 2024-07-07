@@ -3,14 +3,16 @@ import logging
 from aiogram import Bot, Dispatcher
 from config import Config
 
-# Logging
+# Logging configuration
+handlers = [logging.StreamHandler()]
+if Config.LOG_TO_FILE:
+    handlers.append(logging.FileHandler(Config.LOG_FILE))
+
 logging.basicConfig(level=Config.LOG_LEVEL,
-                    format='%(levelname)s | %(name)s | %(message)s | %(asctime)s',
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
-                    handlers=[
-                        logging.FileHandler(Config.LOG_FILE),
-                        logging.StreamHandler()
-                    ])
+                    handlers=handlers)
+
 logger = logging.getLogger(__name__)
 
 # Bot and Dispatcher initialization
