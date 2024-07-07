@@ -4,9 +4,14 @@ from aiogram import Bot, Dispatcher
 from config import Config
 
 # Logging configuration
+class FlushFileHandler(logging.FileHandler):
+    def emit(self, record):
+        super().emit(record)
+        self.flush()
+
 handlers = [logging.StreamHandler()]
 if Config.LOG_TO_FILE:
-    handlers.append(logging.FileHandler(Config.LOG_FILE))
+    handlers.append(FlushFileHandler(Config.LOG_FILE))
 
 logging.basicConfig(level=Config.LOG_LEVEL,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
