@@ -6,7 +6,8 @@ load_dotenv()
 @dataclass
 class Config:
     BOT_TOKEN: str = os.getenv('BOT_TOKEN')
-    LOG_LEVEL: str = os.getenv('LOG_LEVEL', 'INFO')
+    LOG_LEVEL: str = os.getenv('LOG_LEVEL', "INFO")
+    LOG_FILE: str = os.getenv('LOG_FILE', 'bot.log')
 
 
 
