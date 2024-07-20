@@ -1,8 +1,8 @@
-import asyncio
 import logging
 from aiogram import Bot, Dispatcher
+
+from services import database as db
 from config import Config
-from services.sql import DataBase as DB
 from handlers import user
 
 
@@ -13,14 +13,14 @@ class FlushFileHandler(logging.FileHandler):
         self.flush()
 
 
-handlers = [logging.StreamHandler()]
+log_handlers = [logging.StreamHandler()]
 if Config.LOG_TO_FILE:
-    handlers.append(FlushFileHandler(Config.LOG_FILE))
+    log_handlers.append(FlushFileHandler(Config.LOG_FILE))
 
 logging.basicConfig(level=Config.LOG_LEVEL,
-                    format='%(levelname)s - %(asctime)s - %(name)s - %(message)s',
+                    format='%(asctime)s\t %(levelname)s\t %(name)s\t %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
-                    handlers=handlers)
+                    handlers=log_handlers)
 
 logger = logging.getLogger(__name__)
 
@@ -29,21 +29,7 @@ bot = Bot(token=Config.BOT_TOKEN)
 dp = Dispatcher()
 
 # Initialize the database
-DB()
-
+db.initialize(Config.DB_PATH)
 
 # # Register handlers
 # user.register_handlers_user(dp)
-
-async def main():
-    logger.info("Starting bot")
-    try:
-        await dp.start_polling(bot)
-    except Exception as e:
-        logger.exception(f"Error starting bot: {e}")
-    finally:
-        await bot.session.close()
-
-
-if __name__ == '__main__':
-    asyncio.run(main())
