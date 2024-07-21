@@ -1,11 +1,9 @@
 import logging
-from services.logger import configurate_logger
+from bot.utils.logger import configurate_logger
 from aiogram import Bot, Dispatcher
 
 from services import database as db
 from config import Config
-from handlers import user
-
 
 # Logging configuration
 configurate_logger(Config.LOG_FILE, Config.LOG_TO_FILE, Config.LOG_TO_CONSOLE, Config.LOG_LEVEL)

@@ -13,3 +13,4 @@ class Config:
     LOG_TO_FILE: bool = os.getenv('LOG_TO_FILE', 'True') == 'True'
     LOG_TO_CONSOLE: bool = os.getenv('LOG_TO_CONSOLE', 'True') == 'True'
     DB_PATH: str = os.getenv('DB_PATH', 'database.db')
+    SUPERUSER_IDS = list(map(int, str(os.getenv('SUPERUSER_IDS')).split(' ')))
