@@ -162,5 +162,5 @@ cython_debug/
 .idea/
 
 # Ignore data files
-bot/data/*.db
-bot/data/*.sqlite3
+*.db
+*.sqlite3

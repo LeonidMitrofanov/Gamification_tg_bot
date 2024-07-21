@@ -24,7 +24,8 @@ def initialize(db_path: str):
 
         logger.info("Database initialized successfully")
     except sql.Error as e:
-        logger.exception(f"Error initializing data: {e}")
+        logger.critical(f"Error initializing data: {e}")
+        exit()
 
 
 def _create_tables(cursor):
