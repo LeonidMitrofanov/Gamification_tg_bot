@@ -1,11 +1,14 @@
 import logging
-import asyncio
-from utils.logger import configurate_logger
 from aiogram import Bot, Dispatcher
 
-from services.models import *
-from services import database as db
-from config import Config
+from bot.utils.logger import configurate_logger
+from bot.config import Config
+from bot.enums.enums import Tribe
+from bot.services.database.response.base import initialize as db_initialize
+from bot.services.database.response import user as db_user
+
+from bot.telegram.handlers.admin import router as admin_router
+from bot.telegram.handlers.common import router as common_router
 
 # Logging configuration
 configurate_logger(Config.LOG_FILE, Config.LOG_TO_FILE, Config.LOG_TO_CONSOLE, Config.LOG_LEVEL)
@@ -15,12 +18,19 @@ logger = logging.getLogger(__name__)
 bot = Bot(token=Config.BOT_TOKEN)
 dp = Dispatcher()
 
-# Initialize the database
-db.initialize(Config.DB_PATH)
+# Include routers
+dp.include_routers(admin_router, common_router)
 
 
-# # Register handlers
-# user.register_handlers_user(dp)
+async def loading_data():
+    # Initialize the database
+    await db_initialize(Config.DB_PATH)
+
+    # Load users from file
+    if Config.LOAD_USERS_FROM_FILE:
+        await load_users_from_file(Config.LIST_USERS_PATH)
+
+
 async def load_users_from_file(file_path: str):
     logger.debug(f"load_users_from_file called with file_path: {file_path}")
 
@@ -32,13 +42,13 @@ async def load_users_from_file(file_path: str):
     }
 
     try:
-        with open(file_path) as file:
+        with open(file_path, 'r') as file:
             logger.debug(f"Opened file: {file_path}")
-            users = file.read().split('\n')
+            users = file.read().strip().split('\n')
             logger.debug(f"Read {len(users)} lines from file")
 
             for user in users:
-                if user.strip() == "":
+                if not user.strip():
                     continue
 
                 info = [part.strip() for part in user.split('|')]
@@ -46,25 +56,31 @@ async def load_users_from_file(file_path: str):
                     logger.warning(f"Skipping malformed line: {user}")
                     continue
 
-                tg_id, name, tribe_name = int(info[0]), info[1], info[2]
+                try:
+                    tg_id = int(info[0])
+                    name = info[1]
+                    tribe_name = info[2]
+                except ValueError:
+                    logger.warning(f"Skipping line with invalid format: {user}")
+                    continue
+
                 tribe_value = tribe_mapping.get(tribe_name.lower())
-                logger.debug(f"Parsed user info - tg_id: {tg_id}, name: {name}, tribe_name: {tribe_name},"
-                             f" tribe_value: {tribe_value}")
+                logger.debug(f"Parsed user info - tg_id: {tg_id}, name: {name}, tribe_name: {tribe_name}, "
+                             f"tribe_value: {tribe_value}")
 
                 if tribe_value is not None:
-                    if not db.user_exists(tg_id=tg_id):
+                    if not await db_user.user_exists(tg_id=tg_id):
                         if tg_id in Config.SUPERUSER_IDS:
-                            await db.add_admin(tg_id, name, tribe_value)
+                            await db_user.add_admin(tg_id, name, tribe_value)
                         else:
-                            await db.add_user(tg_id, name, tribe_value)
+                            await db_user.add_user(tg_id, name, tribe_value)
                     else:
-                        logger.info(f"User already exists - tg_id: {tg_id}")
+                        logger.warning(f"User already exists - tg_id: {tg_id}")
                 else:
                     logger.warning(f"Tribe not found for tribe_name: {tribe_name}")
 
     except FileNotFoundError:
         logger.error(f"File not found: {file_path}")
-        exit()
+        raise
     except Exception as e:
         logger.exception(f"Error loading users from file: {e}")
-

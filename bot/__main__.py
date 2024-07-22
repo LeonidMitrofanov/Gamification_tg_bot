@@ -1,14 +1,12 @@
 import asyncio
 
-import handlers
-from loader import logger, bot, dp, db, load_users_from_file, Config
+from bot.loader import logger, bot, dp, loading_data
 
 
 async def main():
     logger.info("Starting bot")
     try:
-        if Config.LOAD_USERS_FROM_FILE:
-            await load_users_from_file(Config.LIST_USERS_PATH)
+        await loading_data()
         await dp.start_polling(bot)
 
     except Exception as e:
