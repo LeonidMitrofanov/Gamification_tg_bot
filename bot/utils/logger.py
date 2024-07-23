@@ -27,7 +27,3 @@ def configurate_logger(log_file: str, log_to_file: bool, log_to_console: bool, l
                         format='%(asctime)s | %(levelname)s | %(name)s:%(funcName)s:%(lineno)s | %(message)s',
                         # datefmt='%d.%m.%Y %H:%M:%S',
                         handlers=log_handlers)
-
-    logger = logging.getLogger(__name__)
-    logger.debug(f"Logger configured with : log_file: {log_file}, log_to_file: {log_file}, "
-                 f"log_to_console: {log_to_console}, log_level: {log_level}")
