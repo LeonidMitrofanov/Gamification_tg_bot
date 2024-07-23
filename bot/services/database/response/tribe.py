@@ -46,6 +46,7 @@ async def add_tribe(tribe_name: str, wallet_token: Optional[int] = None, tribe_i
 
             await conn.commit()
             logger.debug("Transaction committed")
+        await _add_wallet(wallet_token)
         logger.info(
             f"Tribe '{tribe_name}' added successfully with wallet_token: {wallet_token} and tribe_id: {tribe_id}")
     except sql.Error as e:
