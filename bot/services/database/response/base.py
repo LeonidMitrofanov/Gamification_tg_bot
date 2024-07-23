@@ -172,7 +172,7 @@ async def _create_wallets_table(cursor):
     try:
         await cursor.execute('''
         CREATE TABLE IF NOT EXISTS wallets (
-            wallet_token INTEGER PRIMARY KEY AUTOINCREMENT,
+            wallet_token INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
             balance REAL DEFAULT 0
         )
         ''')
