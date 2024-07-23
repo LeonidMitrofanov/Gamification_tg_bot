@@ -10,22 +10,31 @@ logger = logging.getLogger(__name__)
 
 async def initialize(db_path: str):
     db_cfg.path = db_path
+    logger.debug(f"Initializing database with path: {db_cfg.path}")
+
     try:
         async with sql.connect(db_cfg.path) as conn:
             async with conn.cursor() as cursor:
                 # Enable foreign key support
                 await cursor.execute('PRAGMA foreign_keys = ON;')
+                logger.debug("Enabled foreign key support")
 
                 await _create_tables(conn)
+                logger.debug("Tables creation process completed")
+
                 await _insert_initial_data(conn)
+                logger.debug("Initial data insertion process completed")
 
             await conn.commit()
+            logger.debug("Transaction committed")
 
         logger.info("Database initialized successfully")
     except sql.Error as e:
         logger.critical(f"Error initializing database: {e}")
         raise
-
+    except Exception as e:
+        logger.exception(f"Unexpected error during database initialization: {e}")
+        raise
 
 async def _create_tables(conn):
     logger.debug("Starting to create tables")

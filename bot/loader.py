@@ -34,9 +34,7 @@ async def loading_data():
     dp.include_routers(admin_router, common_router, start_router)
 
     # Initialize the database
-    logger.debug(f"Initializing database with path: {Config.DB_PATH}")
     await db_initialize(Config.DB_PATH)
-    logger.info("Database initialized successfully")
 
     # Load users from file
     if Config.LOAD_USERS_FROM_FILE:
@@ -46,7 +44,7 @@ async def loading_data():
     else:
         logger.debug("LOAD_USERS_FROM_FILE is set to False, skipping loading users from file")
 
-    logger.debug("loading_data function completed")
+    logger.debug("loading_data function completed successfully")
 
 
 async def load_users_from_file(file_path: str):
