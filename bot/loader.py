@@ -9,6 +9,7 @@ from bot.services.database.response import user as db_user
 
 from bot.telegram.handlers.admin import router as admin_router
 from bot.telegram.handlers.common import router as common_router
+from bot.telegram.handlers.start import router as start_router
 
 
 # Variables
@@ -30,7 +31,7 @@ async def loading_data():
 
     # Include routers
     logger.debug("Including routers")
-    dp.include_routers(admin_router, common_router)
+    dp.include_routers(admin_router, common_router, start_router)
 
     # Initialize the database
     logger.debug(f"Initializing database with path: {Config.DB_PATH}")
