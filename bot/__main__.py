@@ -1,19 +1,21 @@
 import asyncio
+import logging
 
-from bot.loader import logger, bot, dp, loading_data
+from bot import loader
 
 
 async def main():
-    logger.info("Starting bot")
     try:
-        await loading_data()
-        await dp.start_polling(bot)
+        await loader.loading_data()
+        logger = logging.getLogger(__name__)
+        logger.info("Starting bot")
+        await loader.dp.start_polling(loader.bot)
 
     except Exception as e:
-        logger.exception(f"Error starting bot: {e}")
+        loader.logger.exception(f"Error starting bot: {e}")
     finally:
-        await bot.session.close()
-        logger.info("Bot stopped")
+        await loader.bot.session.close()
+        loader.logger.info("Bot stopped")
 
 
 if __name__ == '__main__':

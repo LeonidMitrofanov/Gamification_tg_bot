@@ -10,25 +10,42 @@ from bot.services.database.response import user as db_user
 from bot.telegram.handlers.admin import router as admin_router
 from bot.telegram.handlers.common import router as common_router
 
-# Logging configuration
-configurate_logger(Config.LOG_FILE, Config.LOG_TO_FILE, Config.LOG_TO_CONSOLE, Config.LOG_LEVEL)
-logger = logging.getLogger(__name__)
 
-# Bot and Dispatcher initialization
-bot = Bot(token=Config.BOT_TOKEN)
-dp = Dispatcher()
-
-# Include routers
-dp.include_routers(admin_router, common_router)
+# Variables
+logger: logging.Logger
+bot: Bot
+dp: Dispatcher
 
 
 async def loading_data():
+    global logger, bot, dp
+    # Logging configuration
+    configurate_logger(Config.LOG_FILE, Config.LOG_TO_FILE, Config.LOG_TO_CONSOLE, Config.LOG_LEVEL)
+    logger = logging.getLogger(__name__)
+
+    logger.debug("Initializing Bot and Dispatcher")
+    # Bot and Dispatcher initialization
+    bot = Bot(token=Config.BOT_TOKEN)
+    dp = Dispatcher()
+
+    # Include routers
+    logger.debug("Including routers")
+    dp.include_routers(admin_router, common_router)
+
     # Initialize the database
+    logger.debug(f"Initializing database with path: {Config.DB_PATH}")
     await db_initialize(Config.DB_PATH)
+    logger.info("Database initialized successfully")
 
     # Load users from file
     if Config.LOAD_USERS_FROM_FILE:
+        logger.debug(f"Loading users from file: {Config.LIST_USERS_PATH}")
         await load_users_from_file(Config.LIST_USERS_PATH)
+        logger.info("Users loaded from file successfully")
+    else:
+        logger.debug("LOAD_USERS_FROM_FILE is set to False, skipping loading users from file")
+
+    logger.debug("loading_data function completed")
 
 
 async def load_users_from_file(file_path: str):
