@@ -28,6 +28,9 @@ async def _add_user(tg_id: int, name: str, tribe_id: int, user_role: int) -> Non
             logger.debug("Transaction committed")
         await _add_wallet(wallet_token)
         logger.info(f"User \"{name} tg_id: {tg_id}\" added successfully")
+    except sql.IntegrityError as e:
+        logger.critical(f"Critical error adding user: {e}")
+        raise
     except sql.Error as e:
         logger.exception(f"Error adding user: {e}")
 

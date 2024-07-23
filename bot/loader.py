@@ -98,7 +98,8 @@ async def load_users_from_file(file_path: str):
                     logger.warning(f"Tribe not found for tribe_name: {tribe_name}")
 
     except FileNotFoundError:
-        logger.error(f"File not found: {file_path}")
+        logger.critical(f"File not found: {file_path}")
         raise
     except Exception as e:
-        logger.exception(f"Error loading users from file: {e}")
+        logger.critical(f"Error loading users from file: {e}")
+        raise
