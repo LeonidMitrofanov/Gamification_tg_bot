@@ -15,7 +15,6 @@ async def _add_user(tg_id: int, name: str, tribe_id: int, user_role: int) -> Non
         f"add_user called with tg_id: {tg_id}, name: {name}, tribe_id: {tribe_id}, user_role: {user_role}")
 
     wallet_token = _generate_wallet_token(tg_id)
-    await _add_wallet(wallet_token)
 
     try:
         async with sql.connect(db_cfg.path) as conn:
@@ -27,6 +26,7 @@ async def _add_user(tg_id: int, name: str, tribe_id: int, user_role: int) -> Non
                 logger.debug("Executed SQL insert statement")
             await conn.commit()
             logger.debug("Transaction committed")
+        await _add_wallet(wallet_token)
         logger.info(f"User \"{name} tg_id: {tg_id}\" added successfully")
     except sql.Error as e:
         logger.exception(f"Error adding user: {e}")
@@ -122,3 +122,19 @@ async def get_user(tg_id: Optional[int] = None, user_id: Optional[int] = None) -
     except sql.Error as e:
         logger.exception(f"Error retrieving user info: {e}")
         return None
+
+
+async def update_user_tg_teg(tg_id: int, tg_teg: str) -> bool:
+    logger.debug(f"Updating tg_teg for user with tg_id: {tg_id} to {tg_teg}")
+    try:
+        async with sql.connect(db_cfg.path) as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute('''
+                    UPDATE users SET tg_teg = ? WHERE tg_id = ?
+                ''', (tg_teg, tg_id))
+            await conn.commit()
+        logger.info(f"tg_teg updated for user with tg_id: {tg_id}, tg_teg: {tg_teg}")
+        return True
+    except sql.Error as e:
+        logger.critical(f"Error updating tg_teg: {e}")
+        return False
