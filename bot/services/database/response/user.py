@@ -3,16 +3,18 @@ import logging
 from typing import Optional
 
 from bot.services.database.models.user import DBUser
-from . import db_parameters as db_cfg
+from bot.services.database import db_parameters as db_cfg
 from .wallet import _generate_wallet_token, _add_wallet
 from bot.enums.enums import UserRole
+from bot.enums.language import Language
 
 logger = logging.getLogger(__name__)
 
 
-async def _add_user(tg_id: int, name: str, tribe_id: int, user_role: int) -> None:
-    logger.debug(
-        f"add_user called with tg_id: {tg_id}, name: {name}, tribe_id: {tribe_id}, user_role: {user_role}")
+async def _add_user(tg_id: int, name: str, tribe_id: int, user_role: int,
+                    language: str = Language.DEFAULT) -> None:
+    logger.debug(f"add_user called with tg_id: {tg_id}, name: {name}, tribe_id: {tribe_id},"
+                 f" locale: {language}, user_role: {user_role}")
 
     wallet_token = _generate_wallet_token(tg_id)
 
@@ -21,26 +23,27 @@ async def _add_user(tg_id: int, name: str, tribe_id: int, user_role: int) -> Non
             logger.debug(f"Connected to the database: {db_cfg.path}")
             async with conn.cursor() as cursor:
                 await cursor.execute('''
-                INSERT INTO users (tg_id, name, tribe_id, wallet_token, role_id) VALUES (?, ?, ?, ?, ?)
-                ''', (tg_id, name, tribe_id, wallet_token, user_role))
-                logger.debug("Executed SQL insert statement")
+                INSERT INTO users (tg_id, name, tribe_id, wallet_token, language, role_id) VALUES (?, ?, ?, ?, ?, ?)
+                ''', (tg_id, name, tribe_id, wallet_token, language, user_role))
             await conn.commit()
             logger.debug("Transaction committed")
         await _add_wallet(wallet_token)
         logger.info(f"User \"{name} tg_id: {tg_id}\" added successfully")
-    except sql.IntegrityError as e:
-        logger.critical(f"Critical error adding user: {e}")
-        raise
     except sql.Error as e:
-        logger.exception(f"Error adding user: {e}")
+        logger.error(f"Error adding user: {e}")
+        raise
 
 
-async def add_user(tg_id: int, name: str, tribe_id: int) -> None:
-    await _add_user(tg_id, name, tribe_id, UserRole.USER.value)
+async def add_user(tg_id: int, name: str, tribe_id: int, language: Optional[str] = Language.DEFAULT) -> None:
+    if language is None:
+        language = Language.DEFAULT
+    await _add_user(tg_id, name, tribe_id, UserRole.USER.value, language)
 
 
-async def add_admin(tg_id: int, name: str, tribe_id: int) -> None:
-    await _add_user(tg_id, name, tribe_id, UserRole.ADMIN.value)
+async def add_admin(tg_id: int, name: str, tribe_id: int, language: Optional[str] = Language.DEFAULT) -> None:
+    if language is None:
+        language = Language.DEFAULT
+    await _add_user(tg_id, name, tribe_id, UserRole.ADMIN.value, language)
 
 
 async def user_exists(user_id: Optional[int] = None, tg_id: Optional[int] = None) -> bool:
@@ -97,7 +100,7 @@ async def get_user(tg_id: Optional[int] = None, user_id: Optional[int] = None) -
         async with sql.connect(db_cfg.path) as conn:
             logger.debug(f"Connected to the database: {db_cfg.path}")
             async with conn.cursor() as cursor:
-                if user_id is not None:
+                if user_id is not None:  # TODO: add field locale
                     await cursor.execute('''
                         SELECT user_id, tg_id, name, tribe_id, role_id, wallet_token, description, photo_path
                         FROM users

@@ -1,4 +1,4 @@
-from aiogram import Dispatcher, Router
-from typing import TYPE_CHECKING, Any, Final
+from aiogram import Router
 
-router: Final[Router] = Router(name=__name__)
+router = Router(name=__name__)
+messages: dict[str | None, str | None]

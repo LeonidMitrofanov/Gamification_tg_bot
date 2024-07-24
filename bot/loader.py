@@ -1,15 +1,17 @@
 import logging
 from aiogram import Bot, Dispatcher
 
-from bot.utils.logger import configurate_logger
 from bot.config import Config
 from bot.enums.enums import Tribe
-from bot.services.database.response.base import initialize as db_initialize
+from bot.enums import language
+from bot.telegram.handlers.common import menu as menu_handler
+from bot.telegram.handlers.common import start as start_handler
 from bot.services.database.response import user as db_user
-
+from bot.services.database.response.base import initialize as db_initialize
 from bot.telegram.handlers.admin import router as admin_router
 from bot.telegram.handlers.common import router as common_router
-from bot.telegram.handlers.start import router as start_router
+from bot.utils.json_loader import load_messages_from_xml
+from bot.utils.logger import configurate_logger
 
 
 # Variables
@@ -31,7 +33,14 @@ async def loading_data():
 
     # Include routers
     logger.debug("Including routers")
-    dp.include_routers(admin_router, common_router, start_router)
+    dp.include_routers(admin_router, common_router)
+
+    # Set default language
+    language.Language.DEFAULT = Config.DEFAULT_LANGUAGE
+
+    # Load messages from json
+    menu_handler.messages = load_messages_from_xml(Config.MESSAGES_PATH + '/common/menu.xml')
+    start_handler.messages = load_messages_from_xml(Config.MESSAGES_PATH + '/common/start.xml')
 
     # Initialize the database
     await db_initialize(Config.DB_PATH)
@@ -68,7 +77,7 @@ async def load_users_from_file(file_path: str):
                     continue
 
                 info = [part.strip() for part in user.split('|')]
-                if len(info) != 3:
+                if len(info) < 3:
                     logger.warning(f"Skipping malformed line: {user}")
                     continue
 
@@ -76,20 +85,27 @@ async def load_users_from_file(file_path: str):
                     tg_id = int(info[0])
                     name = info[1]
                     tribe_name = info[2]
+                    locale = info[3] if len(info) > 3 else None
                 except ValueError:
                     logger.warning(f"Skipping line with invalid format: {user}")
                     continue
 
                 tribe_value = tribe_mapping.get(tribe_name.lower())
                 logger.debug(f"Parsed user info - tg_id: {tg_id}, name: {name}, tribe_name: {tribe_name}, "
-                             f"tribe_value: {tribe_value}")
+                             f"tribe_value: {tribe_value}, locale: {locale}")
 
                 if tribe_value is not None:
                     if not await db_user.user_exists(tg_id=tg_id):
                         if tg_id in Config.SUPERUSER_IDS:
-                            await db_user.add_admin(tg_id, name, tribe_value)
+                            if locale in [language.Language.RU, language.Language.EN]:
+                                await db_user.add_admin(tg_id, name, tribe_value, locale)
+                            else:
+                                await db_user.add_admin(tg_id, name, tribe_value)
                         else:
-                            await db_user.add_user(tg_id, name, tribe_value)
+                            if locale in [language.Language.RU, language.Language.EN]:
+                                await db_user.add_user(tg_id, name, tribe_value, locale)
+                            else:
+                                await db_user.add_user(tg_id, name, tribe_value)
                     else:
                         logger.warning(f"User already exists - tg_id: {tg_id}")
                 else:

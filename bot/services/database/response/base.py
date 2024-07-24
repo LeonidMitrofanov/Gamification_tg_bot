@@ -2,7 +2,7 @@ import aiosqlite as sql
 import logging
 
 from bot.enums.enums import EventState, UserRole, Tribe
-from . import db_parameters as db_cfg
+from bot.services.database import db_parameters as db_cfg
 from .tribe import add_tribe
 
 logger = logging.getLogger(__name__)
@@ -36,6 +36,7 @@ async def initialize(db_path: str):
         logger.exception(f"Unexpected error during database initialization: {e}")
         raise
 
+
 async def _create_tables(conn):
     logger.debug("Starting to create tables")
     try:
@@ -66,19 +67,6 @@ async def _insert_initial_data(conn):
         raise
 
 
-async def _initial_tribes(cursor):
-    logger.debug("Inserting initial tribes")
-    try:
-        await add_tribe('Aqua', Tribe.AQUA.value, Tribe.AQUA.value)
-        await add_tribe('Ignis', Tribe.IGNIS.value, Tribe.IGNIS.value)
-        # await add_tribe('Air', Tribe.AIR.value, Tribe.AIR.value)
-        # await add_tribe('Terra', Tribe.TERRA.value, Tribe.TERRA.value)
-        logger.info("Initial tribes inserted successfully")
-    except Exception as e:
-        logger.critical(f"Critical error inserting initial tribes: {e}")
-        raise
-
-
 async def _create_users_table(cursor):
     logger.debug("Creating users table")
     try:
@@ -91,6 +79,7 @@ async def _create_users_table(cursor):
             tribe_id INTEGER NOT NULL,
             role_id INTEGER NOT NULL,
             wallet_token INTEGER UNIQUE NOT NULL,
+            language TEXT NOT NULL,
             description TEXT,
             photo_path TEXT,
             FOREIGN KEY(tribe_id) REFERENCES tribes(tribe_id),
@@ -203,6 +192,19 @@ async def _create_user_roles_table(cursor):
         logger.info("UserRoles table created successfully")
     except sql.Error as e:
         logger.critical(f"Critical error creating userRoles table: {e}")
+        raise
+
+
+async def _initial_tribes(cursor):
+    logger.debug("Inserting initial tribes")
+    try:
+        await add_tribe('Aqua', Tribe.AQUA.value, Tribe.AQUA.value)
+        await add_tribe('Ignis', Tribe.IGNIS.value, Tribe.IGNIS.value)
+        # await add_tribe('Air', Tribe.AIR.value, Tribe.AIR.value)
+        # await add_tribe('Terra', Tribe.TERRA.value, Tribe.TERRA.value)
+        logger.info("Initial tribes inserted successfully")
+    except Exception as e:
+        logger.critical(f"Critical error inserting initial tribes: {e}")
         raise
 
 

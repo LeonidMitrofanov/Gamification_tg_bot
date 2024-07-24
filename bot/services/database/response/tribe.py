@@ -2,10 +2,8 @@ import aiosqlite as sql
 import logging
 from typing import Optional
 
-from bot.services.database.models.user import DBUser
-from . import db_parameters as db_cfg
+from .. import db_parameters as db_cfg
 from .wallet import _generate_wallet_token, _add_wallet
-from bot.enums.enums import UserRole
 
 logger = logging.getLogger(__name__)
 

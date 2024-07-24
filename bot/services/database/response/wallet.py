@@ -1,7 +1,7 @@
 import aiosqlite as sql
 import logging
 
-from . import db_parameters as db_cfg
+from .. import db_parameters as db_cfg
 
 logger = logging.getLogger(__name__)
 
