@@ -1,11 +1,20 @@
 import aiosqlite as sql
 import logging
 from typing import Optional
+from random import choice
 
 from .. import db_config
 from .wallet import _generate_wallet_token, _add_wallet
+from bot.enums.enums import Tribe
 
 logger = logging.getLogger(__name__)
+
+
+def _generate_tribe_id() -> int:
+    logger.debug(f"Generate tribe_id")
+    random_tribe = choice(list(Tribe))
+    logger.debug(f"{random_tribe} chosen")
+    return random_tribe.value
 
 
 async def add_tribe(tribe_name: str, wallet_token: Optional[int] = None, tribe_id: Optional[int] = None) -> None:

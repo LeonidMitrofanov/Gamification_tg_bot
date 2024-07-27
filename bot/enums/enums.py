@@ -9,8 +9,8 @@ class UserRole(Enum):
 class Tribe(Enum):
     AQUA = 1
     IGNIS = 2
-    AIR = 3
-    TERRA = 4
+    # AIR = 3
+    # TERRA = 4
 
 
 class EventState(Enum):

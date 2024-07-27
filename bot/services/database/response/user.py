@@ -5,16 +5,20 @@ from typing import Optional
 from bot.services.database.models.user import DBUser
 from bot.services.database import db_config
 from .wallet import _generate_wallet_token, _add_wallet
+from .tribe import _generate_tribe_id
 from bot.enums.enums import UserRole
 from bot.enums.language import Language
 
 logger = logging.getLogger(__name__)
 
 
-async def _add_user(tg_id: int, name: str, tribe_id: int, user_role: int,
-                    language: str = Language.DEFAULT) -> None:
+async def _add_user(tg_id: int, name: str, user_role: int,
+                    tribe_id: Optional[int] = None, language: str = Language.DEFAULT) -> None:
     logger.debug(f"add_user called with tg_id: {tg_id}, name: {name}, tribe_id: {tribe_id},"
                  f" language: {language}, user_role: {user_role}")
+
+    if tribe_id is None:
+        tribe_id = _generate_tribe_id()
 
     wallet_token = _generate_wallet_token(tg_id)
 
@@ -34,16 +38,18 @@ async def _add_user(tg_id: int, name: str, tribe_id: int, user_role: int,
         raise
 
 
-async def add_user(tg_id: int, name: str, tribe_id: int, language: Optional[str] = Language.DEFAULT) -> None:
-    if language is None:
+async def add_user(tg_id: int, name: str, tribe_id: Optional[int] = None,
+                   language: Optional[str] = Language.DEFAULT) -> None:
+    if (language is None) or not (language in Language.ALL):
         language = Language.DEFAULT
-    await _add_user(tg_id, name, tribe_id, UserRole.USER.value, language)
+    await _add_user(tg_id, name, UserRole.USER.value, tribe_id, language)
 
 
-async def add_admin(tg_id: int, name: str, tribe_id: int, language: Optional[str] = Language.DEFAULT) -> None:
-    if language is None:
+async def add_admin(tg_id: int, name: str, tribe_id: Optional[int] = None,
+                    language: Optional[str] = Language.DEFAULT) -> None:
+    if (language is None) or not (language in Language.ALL):
         language = Language.DEFAULT
-    await _add_user(tg_id, name, tribe_id, UserRole.ADMIN.value, language)
+    await _add_user(tg_id, name, UserRole.ADMIN.value, tribe_id, language)
 
 
 async def user_exists(user_id: Optional[int] = None, tg_id: Optional[int] = None) -> bool:
@@ -102,13 +108,15 @@ async def get_user(tg_id: Optional[int] = None, user_id: Optional[int] = None) -
             async with conn.cursor() as cursor:
                 if user_id is not None:
                     await cursor.execute('''
-                        SELECT user_id, tg_id, tg_teg, name, tribe_id, role_id, wallet_token, language, description, photo_path
+                        SELECT user_id, tg_id, tg_teg, name, tribe_id, role_id,
+                        wallet_token, language, description, photo_path
                         FROM users
                         WHERE user_id = ?
                     ''', (user_id,))
                 elif tg_id is not None:
                     await cursor.execute('''
-                        SELECT user_id, tg_id, tg_teg, name, tribe_id, role_id, wallet_token, language, description, photo_path
+                        SELECT user_id, tg_id, tg_teg, name, tribe_id, role_id, 
+                        wallet_token, language, description, photo_path
                         FROM users
                         WHERE tg_id = ?
                     ''', (tg_id,))

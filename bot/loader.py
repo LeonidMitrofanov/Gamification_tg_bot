@@ -2,17 +2,16 @@ import logging
 from aiogram import Bot, Dispatcher
 
 from bot.config import Config
-from bot.enums.enums import Tribe
 from bot.enums import language
-from bot.telegram.handlers.common import menu as menu_handler
-from bot.telegram.handlers.common import start as start_handler
-from bot.services.database.response import user as db_user
-from bot.services.database.response.base import initialize as db_initialize
+from bot.enums.enums import Tribe
+from bot.telegram.handlers import handlers_config
 from bot.telegram.handlers.admin import router as admin_router
 from bot.telegram.handlers.common import router as common_router
+from bot.services.database.response import user as db_user
+from bot.services.database.response.base import initialize as db_initialize
 from bot.utils.json_loader import load_messages_from_xml
 from bot.utils.logger import configurate_logger
-
+from bot.exceptions.loading import InvalidDefaultLanguageError
 
 # Variables
 logger: logging.Logger
@@ -35,12 +34,20 @@ async def loading_data():
     logger.debug("Including routers")
     dp.include_routers(admin_router, common_router)
 
+    logger.debug("Set default language")
     # Set default language
+    if not (Config.DEFAULT_LANGUAGE in language.Language.ALL):
+        raise InvalidDefaultLanguageError(Config.DEFAULT_LANGUAGE)
     language.Language.DEFAULT = Config.DEFAULT_LANGUAGE
 
     # Load messages from json
-    menu_handler.messages = load_messages_from_xml(Config.MESSAGES_PATH + '/common/menu.xml')
-    start_handler.messages = load_messages_from_xml(Config.MESSAGES_PATH + '/common/start.xml')
+    handlers_config.menu_messages = load_messages_from_xml(Config.MESSAGES_PATH + '/common/menu.xml')
+    handlers_config.registration_messages = load_messages_from_xml(Config.MESSAGES_PATH + '/common/registration.xml')
+
+    # Set secret keys
+    logger.debug("Set SECRET KEYS")
+    handlers_config.ADMIN_SECRETKEY = Config.ADMIN_SECRETKEY
+    handlers_config.USER_SECRETKEY = Config.USER_SECRETKEY
 
     # Initialize the database
     await db_initialize(Config.DB_PATH)
@@ -92,7 +99,7 @@ async def load_users_from_file(file_path: str):
 
                 tribe_value = tribe_mapping.get(tribe_name.lower())
                 logger.debug(f"Parsed user info - tg_id: {tg_id}, name: {name}, tribe_name: {tribe_name}, "
-                             f"tribe_value: {tribe_value}, locale: {locale}")
+                             f"tribe_value: {tribe_value}, language: {locale}")
 
                 if tribe_value is not None:
                     if not await db_user.user_exists(tg_id=tg_id):
