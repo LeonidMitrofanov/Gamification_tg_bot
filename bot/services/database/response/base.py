@@ -2,18 +2,18 @@ import aiosqlite as sql
 import logging
 
 from bot.enums.enums import EventState, UserRole, Tribe
-from bot.services.database import db_parameters as db_cfg
+from bot.services.database import db_config
 from .tribe import add_tribe
 
 logger = logging.getLogger(__name__)
 
 
 async def initialize(db_path: str):
-    db_cfg.path = db_path
-    logger.debug(f"Initializing database with path: {db_cfg.path}")
+    db_config.path = db_path
+    logger.debug(f"Initializing database with path: {db_config.path}")
 
     try:
-        async with sql.connect(db_cfg.path) as conn:
+        async with sql.connect(db_config.path) as conn:
             async with conn.cursor() as cursor:
                 # Enable foreign key support
                 await cursor.execute('PRAGMA foreign_keys = ON;')

@@ -3,7 +3,7 @@ import logging
 from typing import Optional
 
 from bot.services.database.models.user import DBUser
-from bot.services.database import db_parameters as db_cfg
+from bot.services.database import db_config
 from .wallet import _generate_wallet_token, _add_wallet
 from bot.enums.enums import UserRole
 from bot.enums.language import Language
@@ -14,13 +14,13 @@ logger = logging.getLogger(__name__)
 async def _add_user(tg_id: int, name: str, tribe_id: int, user_role: int,
                     language: str = Language.DEFAULT) -> None:
     logger.debug(f"add_user called with tg_id: {tg_id}, name: {name}, tribe_id: {tribe_id},"
-                 f" locale: {language}, user_role: {user_role}")
+                 f" language: {language}, user_role: {user_role}")
 
     wallet_token = _generate_wallet_token(tg_id)
 
     try:
-        async with sql.connect(db_cfg.path) as conn:
-            logger.debug(f"Connected to the database: {db_cfg.path}")
+        async with sql.connect(db_config.path) as conn:
+            logger.debug(f"Connected to the database: {db_config.path}")
             async with conn.cursor() as cursor:
                 await cursor.execute('''
                 INSERT INTO users (tg_id, name, tribe_id, wallet_token, language, role_id) VALUES (?, ?, ?, ?, ?, ?)
@@ -54,8 +54,8 @@ async def user_exists(user_id: Optional[int] = None, tg_id: Optional[int] = None
         return False
 
     try:
-        async with sql.connect(db_cfg.path) as conn:
-            logger.debug(f"Connected to the database: {db_cfg.path}")
+        async with sql.connect(db_config.path) as conn:
+            logger.debug(f"Connected to the database: {db_config.path}")
             async with conn.cursor() as cursor:
                 if user_id is not None:
                     await cursor.execute('SELECT COUNT(*) FROM users WHERE user_id = ?', (user_id,))
@@ -75,8 +75,8 @@ async def get_user_count() -> int:
     logger.debug("get_user_count called")
 
     try:
-        async with sql.connect(db_cfg.path) as conn:
-            logger.debug(f"Connected to the database: {db_cfg.path}")
+        async with sql.connect(db_config.path) as conn:
+            logger.debug(f"Connected to the database: {db_config.path}")
             async with conn.cursor() as cursor:
                 await cursor.execute('SELECT COUNT(*) FROM users')
                 logger.debug("Executed SQL select statement")
@@ -97,18 +97,18 @@ async def get_user(tg_id: Optional[int] = None, user_id: Optional[int] = None) -
         return None
 
     try:
-        async with sql.connect(db_cfg.path) as conn:
-            logger.debug(f"Connected to the database: {db_cfg.path}")
+        async with sql.connect(db_config.path) as conn:
+            logger.debug(f"Connected to the database: {db_config.path}")
             async with conn.cursor() as cursor:
-                if user_id is not None:  # TODO: add field locale
+                if user_id is not None:
                     await cursor.execute('''
-                        SELECT user_id, tg_id, name, tribe_id, role_id, wallet_token, description, photo_path
+                        SELECT user_id, tg_id, tg_teg, name, tribe_id, role_id, wallet_token, language, description, photo_path
                         FROM users
                         WHERE user_id = ?
                     ''', (user_id,))
                 elif tg_id is not None:
                     await cursor.execute('''
-                        SELECT user_id, tg_id, name, tribe_id, role_id, wallet_token, description, photo_path
+                        SELECT user_id, tg_id, tg_teg, name, tribe_id, role_id, wallet_token, language, description, photo_path
                         FROM users
                         WHERE tg_id = ?
                     ''', (tg_id,))
@@ -119,6 +119,7 @@ async def get_user(tg_id: Optional[int] = None, user_id: Optional[int] = None) -
                 if row:
                     logger.debug(f"User found: {row}")
                     user = DBUser(*row)
+                    logger.debug("Successfully retrieved user")
                     return user
                 else:
                     logger.debug(
@@ -133,7 +134,7 @@ async def get_user(tg_id: Optional[int] = None, user_id: Optional[int] = None) -
 async def update_user_tg_teg(tg_id: int, tg_teg: str) -> bool:
     logger.debug(f"Updating tg_teg for user with tg_id: {tg_id} to {tg_teg}")
     try:
-        async with sql.connect(db_cfg.path) as conn:
+        async with sql.connect(db_config.path) as conn:
             async with conn.cursor() as cursor:
                 await cursor.execute('''
                     UPDATE users SET tg_teg = ? WHERE tg_id = ?

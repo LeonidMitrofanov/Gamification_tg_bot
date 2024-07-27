@@ -2,7 +2,7 @@ import aiosqlite as sql
 import logging
 from typing import Optional
 
-from .. import db_parameters as db_cfg
+from .. import db_config
 from .wallet import _generate_wallet_token, _add_wallet
 
 logger = logging.getLogger(__name__)
@@ -16,8 +16,8 @@ async def add_tribe(tribe_name: str, wallet_token: Optional[int] = None, tribe_i
         wallet_token = _generate_wallet_token(tribe_name)
 
     try:
-        async with sql.connect(db_cfg.path) as conn:
-            logger.debug(f"Connected to the database: {db_cfg.path}")
+        async with sql.connect(db_config.path) as conn:
+            logger.debug(f"Connected to the database: {db_config.path}")
             async with conn.cursor() as cursor:
                 # Check if tribe already exists
                 await cursor.execute('''
