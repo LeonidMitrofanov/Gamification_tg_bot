@@ -4,12 +4,13 @@ from aiogram import Bot, Dispatcher
 from bot.config import Config
 from bot.enums import language
 from bot.enums.enums import Tribe
+from bot.telegram.keyboards import keyboards_config
 from bot.telegram.handlers import handlers_config
 from bot.telegram.handlers.admin import router as admin_router
 from bot.telegram.handlers.common import router as common_router
 from bot.services.database.response import user as db_user
 from bot.services.database.response.base import initialize as db_initialize
-from bot.utils.json_loader import load_messages_from_xml
+from bot.utils.json_loader import load_from_xml
 from bot.utils.logger import configurate_logger
 from bot.exceptions.loading import InvalidDefaultLanguageError
 
@@ -41,8 +42,12 @@ async def loading_data():
     language.Language.DEFAULT = Config.DEFAULT_LANGUAGE
 
     # Load messages from json
-    handlers_config.menu_messages = load_messages_from_xml(Config.MESSAGES_PATH + '/common/menu.xml')
-    handlers_config.registration_messages = load_messages_from_xml(Config.MESSAGES_PATH + '/common/registration.xml')
+    constant_path = "bot/constants"
+    handlers_config.menu_messages = load_from_xml(constant_path + '/messages/common/menu.xml')
+    handlers_config.registration_messages = load_from_xml(constant_path + '/messages/common/registration.xml')
+
+    # Load keyboards from json
+    keyboards_config.menu_keyboard_buttons = load_from_xml(constant_path + '/keyboards/menu.xml')
 
     # Set secret keys
     logger.debug("Set SECRET KEYS")

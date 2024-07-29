@@ -6,6 +6,7 @@ from aiogram.filters.state import StateFilter
 
 from bot.enums.language import Language
 from bot.telegram.handlers import handlers_config as config
+from bot.telegram.keyboards import user as user_keyboards
 from bot.states.registration import RegistrationStates
 from bot.services.database.response import user as db_user
 from bot.utils.json_loader import get_message
@@ -16,16 +17,17 @@ logger = logging.getLogger(__name__)
 
 @router.message(Command("start"))
 async def start_command(message: types.Message, state: FSMContext):
-    logger.info(f"User {message.from_user.id} initiated registration.")
+    logger.info(f"User with tg_id: {message.from_user.id} initiated registration.")
 
     user_id = message.from_user.id
     if await db_user.user_exists(tg_id=user_id):
+        await state.set_state(RegistrationStates.registered)
         user = await db_user.get_user(tg_id=user_id)
-        username = message.from_user.username
-        await db_user.update_user_tg_teg(user_id, username)
-        welcome_message = get_message('welcome_user', Language.DEFAULT, config.menu_messages)
-        await message.answer(welcome_message.format(first_name=user.name))
-        await message.answer(get_message('update_tag', Language.DEFAULT, config.menu_messages))
+        # username = message.from_user.username
+        # await db_user.update_user_tg_teg(user_id, username)
+        # await message.answer(get_message('update_tag', Language.DEFAULT, config.menu_messages))
+        welcome_message = get_message('welcome_user', user.language, config.menu_messages)
+        await message.answer(welcome_message.format(first_name=user.name), reply_markup=user_keyboards.get_main_keyboard(user.language))
     else:
         await message.answer(
             get_message('enter_secret_phrase', Language.DEFAULT, config.registration_messages))

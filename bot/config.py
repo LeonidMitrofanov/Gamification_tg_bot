@@ -15,7 +15,6 @@ class Config:
     LOAD_USERS_FROM_FILE: bool = False                   # Set to False if you don't want to load users from file
     LIST_USERS_PATH: str = "bot/data/users.txt"         # Path to the list of users to load file
     DB_PATH: str = "bot/data/database.db"               # Path to the SQLite database file
-    MESSAGES_PATH: str = "bot/constants/messages"       # Path to the messages to load file
     SUPERUSER_IDS = list(map(int,                       # List of superuser id's
                              os.getenv("SUPERUSER_IDS")
                              .strip().split())),

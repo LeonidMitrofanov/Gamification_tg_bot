@@ -6,14 +6,14 @@ import os
 logger = logging.getLogger(__name__)
 
 
-def load_messages_from_xml(file_path: str) -> dict[str, dict[str, str]]:
+def load_from_xml(file_path: str) -> dict[str, dict[str, str]]:
     """
     Load messages from an XML file and return them as a dictionary.
 
     :param file_path: Path to the XML file.
     :return: Dictionary of messages keyed by their message key and locale.
     """
-    logger.debug(f"Starting load_messages_from_xml function from '{file_path}'")
+    logger.debug(f"Starting load_from_xml function from '{file_path}'")
 
     if not os.path.exists(file_path):
         logger.error(f"XML file {file_path} not found.")
