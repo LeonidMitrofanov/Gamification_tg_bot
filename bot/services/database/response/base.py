@@ -48,6 +48,8 @@ async def _create_tables(conn):
             await _create_event_subscribers_table(cursor)
             await _create_wallets_table(cursor)
             await _create_user_roles_table(cursor)
+            await _create_achievements_table(cursor)
+            await _create_user_achievements_table(cursor)
         logger.info("All tables created successfully")
     except sql.Error as e:
         logger.critical(f"Critical error creating tables: {e}")
@@ -58,7 +60,7 @@ async def _insert_initial_data(conn):
     logger.debug("Inserting initial data")
     try:
         async with conn.cursor() as cursor:
-            await _initial_tribes(cursor)
+            await _initial_tribes()
             await _initial_eventState(cursor)
             await _initial_userRoles(cursor)
         logger.info("Initial data inserted successfully")
@@ -195,7 +197,43 @@ async def _create_user_roles_table(cursor):
         raise
 
 
-async def _initial_tribes(cursor):
+async def _create_achievements_table(cursor):
+    logger.debug("Creating achievements table")
+    try:
+        await cursor.execute('''
+        CREATE TABLE IF NOT EXISTS achievements (
+            achievement_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            description TEXT,
+            photo_path TEXT,
+            bonus REAL DEFAULT 0
+        )
+        ''')
+        logger.info("Achievements table created successfully")
+    except sql.Error as e:
+        logger.critical(f"Critical error creating achievements table: {e}")
+        raise
+
+
+async def _create_user_achievements_table(cursor):
+    logger.debug("Creating user_achievements table")
+    try:
+        await cursor.execute('''
+        CREATE TABLE IF NOT EXISTS user_achievements (
+            user_id INTEGER NOT NULL,
+            achievement_id INTEGER NOT NULL,
+            count INTEGER DEFAULT 0,
+            FOREIGN KEY(user_id) REFERENCES users(user_id),
+            FOREIGN KEY(achievement_id) REFERENCES achievements(achievement_id)
+        )
+        ''')
+        logger.info("User_achievements table created successfully")
+    except sql.Error as e:
+        logger.critical(f"Critical error creating user_achievements table: {e}")
+        raise
+
+
+async def _initial_tribes():
     logger.debug("Inserting initial tribes")
     try:
         await add_tribe('Aqua', Tribe.AQUA.value, Tribe.AQUA.value)
