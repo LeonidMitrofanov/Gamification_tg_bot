@@ -9,7 +9,7 @@ from bot.telegram.handlers import handlers_config as config
 from bot.telegram.keyboards import user as user_keyboards
 from bot.states.registration import RegistrationStates
 from bot.services.database.response import user as db_user
-from bot.utils.json_loader import get_message
+from bot.utils.xml_loader import get_message
 
 router = Router(name=__name__)
 logger = logging.getLogger(__name__)
@@ -23,14 +23,12 @@ async def start_command(message: types.Message, state: FSMContext):
     if await db_user.user_exists(tg_id=user_id):
         await state.set_state(RegistrationStates.registered)
         user = await db_user.get_user(tg_id=user_id)
-        # username = message.from_user.username
-        # await db_user.update_user_tg_teg(user_id, username)
-        # await message.answer(get_message('update_tag', Language.DEFAULT, config.menu_messages))
         welcome_message = get_message('welcome_user', user.language, config.menu_messages)
-        await message.answer(welcome_message.format(first_name=user.name), reply_markup=user_keyboards.get_main_keyboard(user.language))
+        await message.answer(welcome_message.format(first_name=user.name),
+                             reply_markup=user_keyboards.get_menu_keyboard(user.language))
     else:
         await message.answer(
-            get_message('enter_secret_phrase', Language.DEFAULT, config.registration_messages))
+            get_message('enter_secret_phrase', message.from_user.language_code, config.registration_messages))
         await state.set_state(RegistrationStates.waiting_for_secret_phrase)
 
 
@@ -39,15 +37,15 @@ async def enter_secret_phrase(message: types.Message, state: FSMContext):
     logger.debug(f"User {message.from_user.id} entered secret phrase.")
     if message.text == config.USER_SECRETKEY:
         await state.update_data(user_role='user')
-        await message.answer(get_message('enter_surname', Language.DEFAULT, config.registration_messages))
+        await message.answer(get_message('enter_surname', message.from_user.language_code, config.registration_messages))
         await state.set_state(RegistrationStates.waiting_for_surname)
     elif message.text == config.ADMIN_SECRETKEY:
         await state.update_data(user_role='admin')
-        await message.answer(get_message('enter_surname', Language.DEFAULT, config.registration_messages))
+        await message.answer(get_message('enter_surname', message.from_user.language_code, config.registration_messages))
         await state.set_state(RegistrationStates.waiting_for_surname)
     else:
         await message.answer(get_message('invalid_secret_phrase',
-                                         Language.DEFAULT,
+                                         message.from_user.language_code,
                                          config.registration_messages))
 
 
@@ -56,10 +54,11 @@ async def enter_surname(message: types.Message, state: FSMContext):
     logger.debug(f"User {message.from_user.id} entered surname.")
     if message.text.isalpha():
         await state.update_data(surname=message.text)
-        await message.answer(get_message('enter_name', Language.DEFAULT, config.registration_messages))
+        await message.answer(get_message('enter_name', message.from_user.language_code, config.registration_messages))
         await state.set_state(RegistrationStates.waiting_for_name)
     else:
-        await message.answer(get_message('invalid_surname', Language.DEFAULT, config.registration_messages))
+        await message.answer(get_message('invalid_surname', message.from_user.language_code,
+                                         config.registration_messages))
 
 
 @router.message(StateFilter(RegistrationStates.waiting_for_name))
@@ -85,24 +84,4 @@ async def enter_name(message: types.Message, state: FSMContext):
 
         await state.clear()
     else:
-        await message.answer(get_message('invalid_name', Language.DEFAULT, config.registration_messages))
-
-# @router.message(Command("start"))
-# async def start_command(message: types.Message, bot: Bot):
-#     user_id = message.from_user.id
-#     user = await db_user.get_user(tg_id=user_id)
-#     username = '@' + message.from_user.username
-#     first_name = message.from_user.first_name
-#     logger.debug(f"Received /start command from user_id: {user_id}, username: {username}")
-#
-#     try:
-#         if await db_user.user_exists(tg_id=user_id):
-#             await db_user.update_user_tg_teg(user_id, username)
-#             await message.answer(get_message('welcome_user', user.language, messages).format(first_name=user.name))
-#             await message.answer(get_message('update_tag', user.language, messages))
-#         else:
-#             logger.warning(f"User with tg_id: {user_id} not found in the database")
-#             await message.answer(get_message('not_registered', user.language, messages))
-#     except Exception as e:
-#         logger.exception(f"Error processing /start command for user_id: {user_id}: {e}")
-#         await message.answer(get_message("start_error", user.language, messages))
+        await message.answer(get_message('invalid_name', message.from_user.language_code, config.registration_messages))
