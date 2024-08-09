@@ -6,6 +6,8 @@ from random import choice
 from .. import db_config
 from .wallet import _generate_wallet_token, _add_wallet
 from bot.enums.enums import Tribe
+from bot.services.database.models.tribe import Tribe as Tribe_model
+from bot.exceptions.tribe import *
 
 logger = logging.getLogger(__name__)
 
@@ -58,4 +60,32 @@ async def add_tribe(tribe_name: str, wallet_token: Optional[int] = None, tribe_i
             f"Tribe '{tribe_name}' added successfully with wallet_token: {wallet_token} and tribe_id: {tribe_id}")
     except sql.Error as e:
         logger.critical(f"Error adding tribe: {e}")
+        raise
+
+
+async def get_tribe(tribe_id: int) -> Tribe_model:
+    """
+    Retrieve a tribe from the database by its ID.
+
+    :param tribe_id: The ID of the tribe to retrieve.
+    :return: A Tribe_model object if found.
+    :raises TribeNotFoundError: If no tribe with the specified ID is found.
+    """
+    logger.debug(f"get_tribe called with ID {tribe_id}")
+
+    query = "SELECT tribe_id, tribe_name, wallet_token FROM tribes WHERE tribe_id = ?"
+
+    try:
+        async with sql.connect(db_config.path) as conn:
+            async with conn.execute(query, (tribe_id,)) as cursor:
+                row = await cursor.fetchone()
+                if row:
+                    tribe = Tribe_model(tribe_id=row[0], tribe_name=row[1], wallet_token=row[2])
+                    logger.debug(f"Tribe found: {tribe}")
+                    return tribe
+                else:
+                    logger.debug(f"No tribe found with ID {tribe_id}")
+                    raise TribeNotFoundError(tribe_id)
+    except sql.Error as e:
+        logger.error(f"Error fetching tribe with ID {tribe_id}: {e}")
         raise
