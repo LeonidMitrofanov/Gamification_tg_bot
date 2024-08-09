@@ -236,8 +236,8 @@ async def _create_user_achievements_table(cursor):
 async def _initial_tribes():
     logger.debug("Inserting initial tribes")
     try:
-        await add_tribe('Aqua', Tribe.AQUA.value, Tribe.AQUA.value)
-        await add_tribe('Ignis', Tribe.IGNIS.value, Tribe.IGNIS.value)
+        await add_tribe('Aqua 💧', Tribe.AQUA.value, Tribe.AQUA.value)
+        await add_tribe('Ignis 🔥', Tribe.IGNIS.value, Tribe.IGNIS.value)
         # await add_tribe('Air', Tribe.AIR.value, Tribe.AIR.value)
         # await add_tribe('Terra', Tribe.TERRA.value, Tribe.TERRA.value)
         logger.info("Initial tribes inserted successfully")
