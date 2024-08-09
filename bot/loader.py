@@ -1,16 +1,18 @@
 import logging
 from aiogram import Bot, Dispatcher
+from aiogram.enums import ParseMode
+from aiogram.client.default import DefaultBotProperties
 
 from bot.config import Config
 from bot.enums import language
 from bot.enums.enums import Tribe
 from bot.telegram.keyboards import keyboards_config
 from bot.telegram.handlers import handlers_config
-from bot.telegram.handlers.admin import router as admin_router
-from bot.telegram.handlers.common import router as common_router
+# from bot.telegram.handlers.admin import router as admin_router
+# from bot.telegram.handlers.common import router as common_router
 from bot.services.database.response import user as db_user
 from bot.services.database.response.base import initialize as db_initialize
-from bot.utils.json_loader import load_from_xml
+from bot.utils.xml_loader import load_from_xml
 from bot.utils.logger import configurate_logger
 from bot.exceptions.loading import InvalidDefaultLanguageError
 
@@ -28,31 +30,34 @@ async def loading_data():
 
     logger.debug("Initializing Bot and Dispatcher")
     # Bot and Dispatcher initialization
-    bot = Bot(token=Config.BOT_TOKEN)
+    bot = Bot(token=Config.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher()
 
-    # Include routers
-    logger.debug("Including routers")
-    dp.include_routers(admin_router, common_router)
-
-    logger.debug("Set default language")
     # Set default language
+    logger.debug("Set default language")
     if not (Config.DEFAULT_LANGUAGE in language.Language.ALL):
         raise InvalidDefaultLanguageError(Config.DEFAULT_LANGUAGE)
     language.Language.DEFAULT = Config.DEFAULT_LANGUAGE
 
-    # Load messages from json
+    # Load messages from XML
     constant_path = "bot/constants"
     handlers_config.menu_messages = load_from_xml(constant_path + '/messages/common/menu.xml')
     handlers_config.registration_messages = load_from_xml(constant_path + '/messages/common/registration.xml')
+    handlers_config.profile_format = load_from_xml(constant_path + '/messages/common/profile.xml')
 
-    # Load keyboards from json
+    # Load keyboards from XML
     keyboards_config.menu_keyboard_buttons = load_from_xml(constant_path + '/keyboards/menu.xml')
 
     # Set secret keys
     logger.debug("Set SECRET KEYS")
     handlers_config.ADMIN_SECRETKEY = Config.ADMIN_SECRETKEY
     handlers_config.USER_SECRETKEY = Config.USER_SECRETKEY
+
+    # Include routers
+    from bot.telegram.handlers.admin import router as admin_router
+    from bot.telegram.handlers.common import router as common_router
+    logger.debug("Including routers")
+    dp.include_routers(admin_router, common_router)
 
     # Initialize the database
     await db_initialize(Config.DB_PATH)
@@ -74,8 +79,8 @@ async def load_users_from_file(file_path: str):
     tribe_mapping = {
         "ignis": Tribe.IGNIS.value,
         "aqua": Tribe.AQUA.value,
-        "air": Tribe.AIR.value,
-        "terra": Tribe.TERRA.value
+        # "air": Tribe.AIR.value,
+        # "terra": Tribe.TERRA.value
     }
 
     try:
@@ -119,7 +124,7 @@ async def load_users_from_file(file_path: str):
                             else:
                                 await db_user.add_user(tg_id, name, tribe_value)
                     else:
-                        logger.warning(f"User already exists - tg_id: {tg_id}")
+                        logger.warning(f"User already exists - tg_id: {tg_id} name: {name}")
                 else:
                     logger.warning(f"Tribe not found for tribe_name: {tribe_name}")
 
