@@ -1,1 +1,1 @@
-from .main_keyboard import get_main_keyboard
+from .menu_keyboard import get_menu_keyboard
