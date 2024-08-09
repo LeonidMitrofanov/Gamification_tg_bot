@@ -2,12 +2,12 @@ import logging
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 from bot.telegram.keyboards import keyboards_config
-from bot.utils.json_loader import get_message
+from bot.utils.xml_loader import get_message
 
 logger = logging.getLogger(__name__)
 
 
-def get_main_keyboard(locale: str) -> ReplyKeyboardMarkup:
+def get_menu_keyboard(locale: str) -> ReplyKeyboardMarkup:
     """
     Create the main keyboard with localized button texts.
 
@@ -19,6 +19,7 @@ def get_main_keyboard(locale: str) -> ReplyKeyboardMarkup:
         profile_text = get_message('profile', locale, keyboards_config.menu_keyboard_buttons)
         events_text = get_message('events', locale, keyboards_config.menu_keyboard_buttons)
         store_text = get_message('store', locale, keyboards_config.menu_keyboard_buttons)
+        support_text = get_message('support', locale, keyboards_config.menu_keyboard_buttons)
         search_participants_text = get_message('search_participants', locale, keyboards_config.menu_keyboard_buttons)
     except KeyError as e:
         logger.error(f"Error getting localized text: {e}")
@@ -27,7 +28,8 @@ def get_main_keyboard(locale: str) -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text=profile_text), KeyboardButton(text=events_text)],
-            [KeyboardButton(text=store_text), KeyboardButton(text=search_participants_text)]
+            [KeyboardButton(text=store_text), KeyboardButton(text=support_text)],
+            [KeyboardButton(text=search_participants_text)]
         ],
         resize_keyboard=True
     )
