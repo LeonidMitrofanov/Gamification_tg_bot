@@ -139,7 +139,7 @@ async def get_user(tg_id: Optional[int] = None, user_id: Optional[int] = None) -
         return None
 
 
-async def update_user_tg_teg(tg_id: int, tg_teg: str) -> bool:
+async def update_user_tg_teg(tg_id: int, tg_teg: str) -> str:
     logger.debug(f"Updating tg_teg for user with tg_id: {tg_id} to {tg_teg}")
     try:
         async with sql.connect(db_config.path) as conn:
@@ -149,7 +149,7 @@ async def update_user_tg_teg(tg_id: int, tg_teg: str) -> bool:
                 ''', (tg_teg, tg_id))
             await conn.commit()
         logger.info(f"tg_teg updated for user with tg_id: {tg_id}, tg_teg: {tg_teg}")
-        return True
+        return tg_teg
     except sql.Error as e:
-        logger.critical(f"Error updating tg_teg: {e}")
-        return False
+        logger.exception(f"Error updating tg_teg: {e}")
+        raise
